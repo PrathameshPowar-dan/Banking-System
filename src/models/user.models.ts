@@ -16,7 +16,10 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-
+    balance: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 
 userSchema.pre("save", async function () {
@@ -34,7 +37,7 @@ userSchema.methods.GenerateAuthToken = function (): string {
         _id: this._id,
     },
         process.env.JWT_SECRET_KEY || "secretkey",
-        { expiresIn: "1h" }
+        { expiresIn: "24h" }
     );
 }
 
