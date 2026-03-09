@@ -1,6 +1,7 @@
 import express from "express";
-import ConnectDB from "./database/db.ts";
+import ConnectDB from "./database/db";
 import dotenv from "dotenv";
+import userRoutes from "./controllers/user/userRoutes";
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ app.use(express.json());
 app.get("/", (req, res) => {
     res.send("Hello, World!");
 });
+
+app.use("/api/users", userRoutes);
 
 // Connect to the database and start the server
 ConnectDB().then(() => {

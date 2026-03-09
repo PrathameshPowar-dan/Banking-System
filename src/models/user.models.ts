@@ -38,5 +38,5 @@ userSchema.methods.GenerateAuthToken = function (): string {
     );
 }
 
-const User = model("User", userSchema);
+const User = model("Users", userSchema);
 export default User;
