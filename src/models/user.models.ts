@@ -5,16 +5,21 @@ import jwt from "jsonwebtoken";
 const userSchema = new Schema({
     name: {
         type: String,
-        required: true
+        required: [true, "Name is Required for Account Creation"]
     },
     email: {
         type: String,
-        required: true,
-        unique: true
+        required: [true, "Email is Required"],
+        unique: true,
+        trim: true,
+        lowercase: true,
+        match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Invalid Address"]
     },
     password: {
         type: String,
-        required: true
+        required: [true, "Password is Required for Account Creation"],
+        minlength: [6, "Password must contain atleast 6 Characters"],
+        select: false
     },
     balance: {
         type: Number,
