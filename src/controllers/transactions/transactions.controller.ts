@@ -76,6 +76,7 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
     let transaction;
     try {
         // Create Transaction
+        // Session (All are promises are completed or NONE)
         const session = await mongoose.startSession()
         session.startTransaction()
 
@@ -114,19 +115,16 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
 
         await session.commitTransaction()
         session.endSession()
+
     } catch (error) {
         console.error("Transaction Error:", error);
-        return res.status(400).json({
-            message: "Transaction is Pending due to some issue, please retry after sometime",
-        })
-
+        throw new ApiError(400, "Transaction is Pending due to some issue, please retry after sometime")
     }
 
     // Send Email
     await sendTransactionEmail({ userEmail: req.user.email, name: req.user.name, amount, toAccount })
 
-    return res.status(201).json({
-        message: "Transaction completed successfully",
-        transaction: transaction
-    })
+    return res.status(201).json(
+        new ApiResponse(201, { transaction: transaction }, "Transaction completed successfully")
+    )
 });
