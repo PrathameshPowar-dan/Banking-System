@@ -28,8 +28,9 @@ const accountSchema = new Schema({
 accountSchema.index({ user: 1, status: 1 });
 
 accountSchema.methods.GetBalance = async function () {
+    console.log(this._id)
     const Data = await Ledger.aggregate([
-        { $match: { account: this._id } },
+        { $match: { account: new mongoose.Types.ObjectId(this._id.toString()) } },
         {
             $group: {
                 _id: null,

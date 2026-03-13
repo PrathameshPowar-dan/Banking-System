@@ -66,6 +66,7 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
     }
 
     // Balance Check
+    // console.log(fromUserAccount)
     const balance = await (fromUserAccount as unknown as AccountType).GetBalance();
     console.log(balance)
     // const balance = 0;
@@ -76,46 +77,42 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
 
     let transaction;
     try {
-        // Create Transaction
-        // Session (All are promises are completed or NONE)
-        const session = await mongoose.startSession()
-        session.startTransaction()
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
         transaction = (await Transaction.create([{
-            fromAccount,
-            toAccount,
-            amount,
+            fromAccount: fromUserAccount._id,
+            toAccount: toUserAccount._id,
+            amount: Number(amount),
             idempotencyKey,
             status: "PENDING"
-        }], { session }))[0]
+        }], { session }))[0];
 
+        // Create Debit Ledger Entry
         const debitLedgerEntry = await Ledger.create([{
-            account: fromAccount,
-            amount: amount,
+            account: fromUserAccount._id,
+            amount: Number(amount),
             transaction: transaction._id,
             type: "DEBIT"
-        }], { session })
+        }], { session });
 
-        await (() => {
-            return new Promise((resolve) => setTimeout(resolve, 15 * 1000));
-        })()
-
+        // Create Credit Ledger Entry
         const creditLedgerEntry = await Ledger.create([{
-            account: toAccount,
-            amount: amount,
+            account: toUserAccount._id,
+            amount: Number(amount),
             transaction: transaction._id,
             type: "CREDIT"
-        }], { session })
+        }], { session });
 
+        // Mark transaction as completed
         await Transaction.findOneAndUpdate(
             { _id: transaction._id },
             { status: "COMPLETED" },
             { session }
-        )
+        );
 
-
-        await session.commitTransaction()
-        session.endSession()
+        await session.commitTransaction();
+        session.endSession();
 
     } catch (error) {
         console.error("Transaction Error:", error);
@@ -173,14 +170,14 @@ export const CreateIFT = asyncHandler(async (req: Request, res: Response) => {
 
         const debitLedgerEntry = await Ledger.create([{
             account: fromUserAccount._id,
-            amount: amount,
+            amount: Number(amount),
             transaction: transaction._id,
             type: "DEBIT"
         }], { session })
 
         const creditLedgerEntry = await Ledger.create([{
-            account: toAccount,
-            amount: amount,
+            account: toUserAccount._id,
+            amount: Number(amount),
             transaction: transaction._id,
             type: "CREDIT"
         }], { session })
