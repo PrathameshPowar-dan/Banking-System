@@ -16,6 +16,12 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
         throw new ApiError(401, "User not authenticated");
     }
 
+    const numAmount = Number(amount);
+
+    if (isNaN(numAmount) || numAmount <= 0) {
+        throw new ApiError(400, "Transfer amount must be a positive number");
+    }
+
     // Validation
     if (!fromAccount || !toAccount || !amount || !idempotencyKey) {
         throw new ApiError(400, "FromAccount, toAccount, amount and idempotencyKey are required")
@@ -23,15 +29,25 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
 
     const fromUserAccount = await Account.findOne({
         _id: fromAccount,
+        user: req.user._id
     });
 
     const toUserAccount = await Account.findOne({
         _id: toAccount,
     });
 
-    if (!fromUserAccount || !toUserAccount) {
-        throw new ApiError(400, "Invalid fromAccount or toAccount")
+    if (!fromUserAccount) {
+        throw new ApiError(403, "Invalid fromAccount or unauthorized access");
+    }
+
+    if (!toUserAccount) {
+        throw new ApiError(400, "Invalid toAccount")
     };
+
+    // Account Check up
+    if (fromUserAccount._id.toString() === toUserAccount._id.toString()) {
+        throw new ApiError(400, "Cannot transfer funds to the same account");
+    }
 
     // Validating idempotency Key
     const isTransactionAlreadyExists = await Transaction.findOne({
@@ -120,7 +136,11 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
     }
 
     // Send Email
-    await sendTransactionEmail({ userEmail: req.user.email, name: req.user.name, amount, toAccount })
+    try {
+        await sendTransactionEmail({ userEmail: req.user.email, name: req.user.name, amount, toAccount });
+    } catch (emailError) {
+        console.error("Non-fatal: Failed to send transaction receipt email", emailError);
+    }
 
     return res.status(201).json(
         new ApiResponse(201, { transaction: transaction }, "Transaction completed successfully")
@@ -135,6 +155,12 @@ export const CreateIFT = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(401, "User not authenticated");
     }
 
+    const numAmount = Number(amount);
+
+    if (isNaN(numAmount) || numAmount <= 0) {
+        throw new ApiError(400, "Transfer amount must be a positive number");
+    }
+
     if (!toAccount || !amount || !idempotencyKey) {
         throw new ApiError(400, "toAccount, amount and idempotencyKey are required");
     };
@@ -145,6 +171,11 @@ export const CreateIFT = asyncHandler(async (req: Request, res: Response) => {
 
     if (!toUserAccount) {
         throw new ApiError(400, "Invalid toAccount");
+    }
+
+    // Account Check up
+    if (req.user?._id.toString() === toUserAccount._id.toString()) {
+        throw new ApiError(400, "Cannot transfer funds to the same account");
     }
 
     const fromUserAccount = await Account.findOne({
