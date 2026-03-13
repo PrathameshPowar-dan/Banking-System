@@ -1,10 +1,18 @@
-type UserType = {
-    _id: string;
+import { Document, Types } from "mongoose";
+
+export interface AccountType extends Document {
+    _id: Types.ObjectId;
+    user: Types.ObjectId;
+    status: "ACTIVE" | "FROZEN" | "CLOSED";
+    currency: string;
+    GetBalance: () => Promise<number>;
+}
+
+export interface UserType extends Document {
+    _id: Types.ObjectId;
     name: string;
     email: string;
-    password: string;
-    createdAt: Date;
-    updatedAt: Date;
+    password?: string;
     GenerateAuthToken: () => string;
     comparePassword: (candidatePassword: string) => Promise<boolean>;
 }
@@ -16,4 +24,4 @@ type OptionsType = {
     secure: boolean;
 }
 
-export type { UserType, OptionsType };
+export type { OptionsType };

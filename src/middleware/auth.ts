@@ -8,7 +8,7 @@ import { UserType } from "../types/type";
 declare global {
     namespace Express {
         interface Request {
-            user?: any;
+            user?: UserType;
         }
     }
 }
@@ -23,7 +23,7 @@ const AuthToken = asyncHandler(async (req: Request, _, next: NextFunction) => {
 
         const DecodedToken = JWT.verify(Token, process.env.JWT_SECRET_KEY || "secretkey") as { _id: string };
 
-        const user = await User.findById(DecodedToken?._id).select("-password");
+        const user = await User.findById(DecodedToken?._id).select("-password") as UserType | null;
 
         if (!user) {
             throw new ApiError(401, "Invalid Access Token");

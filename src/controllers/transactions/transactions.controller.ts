@@ -7,10 +7,14 @@ import { ApiResponse } from "../../utils/ApiResponse";
 import mongoose from "mongoose";
 import Ledger from "../../models/ledger.models";
 import { sendTransactionEmail } from "../../services/email.service";
-import { UserType } from "../../types/type";
+import { AccountType, UserType } from "../../types/type";
 
 export const createTransaction = asyncHandler(async (req: Request, res: Response) => {
     const { fromAccount, toAccount, amount, idempotencyKey } = req.body;
+
+    if (!req.user) {
+        throw new ApiError(401, "User not authenticated");
+    }
 
     // Validation
     if (!fromAccount || !toAccount || !amount || !idempotencyKey) {
@@ -48,21 +52,21 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
         }
 
         if (isTransactionAlreadyExists.status === "FAILED") {
-            new ApiError(500, "Transaction processing failed, please retry")
+            throw new ApiError(500, "Transaction processing failed, please retry")
         }
 
         if (isTransactionAlreadyExists.status === "REVERSED") {
-            new ApiError(500, "Transaction was reversed, please retry")
+            throw new ApiError(500, "Transaction was reversed, please retry")
         }
     }
 
     // Acc Status
     if (fromUserAccount.status !== "ACTIVE" || toUserAccount.status !== "ACTIVE") {
-        new ApiError(400, "Both fromAccount and toAccount must be ACTIVE to process transaction")
+        throw new ApiError(400, "Both fromAccount and toAccount must be ACTIVE to process transaction")
     }
 
     // Balance Check
-    const balance = await (fromUserAccount as unknown as UserType).GetBalance();
+    const balance = await (fromUserAccount as unknown as AccountType).GetBalance();
     // const balance = 0;
 
     if (balance < amount) {
@@ -111,7 +115,7 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
         await session.commitTransaction()
         session.endSession()
     } catch (error) {
-
+        console.error("Transaction Error:", error);
         return res.status(400).json({
             message: "Transaction is Pending due to some issue, please retry after sometime",
         })
