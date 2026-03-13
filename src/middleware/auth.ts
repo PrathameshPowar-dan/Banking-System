@@ -56,7 +56,7 @@ const AuthSystemUser = asyncHandler(async (req, res, next) => {
         const decoded = JWT.verify(token, process.env.JWT_SECRET_KEY || "secretkey") as { _id: string }
 
         const user = await User.findById(decoded?._id).select("+systemUser") as UserType | null;
-        console.log(user)
+        // console.log(user)
         if (!user || !user.systemUser) {
             return res.status(403).json({
                 message: "Forbidden access, not a system user"

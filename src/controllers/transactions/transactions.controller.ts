@@ -67,6 +67,7 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
 
     // Balance Check
     const balance = await (fromUserAccount as unknown as AccountType).GetBalance();
+    console.log(balance)
     // const balance = 0;
 
     if (balance < amount) {
@@ -162,7 +163,7 @@ export const CreateIFT = asyncHandler(async (req: Request, res: Response) => {
         const session = await mongoose.startSession()
         session.startTransaction()
 
-        const transaction = new Transaction({
+        transaction = new Transaction({
             fromAccount: fromUserAccount._id,
             toAccount,
             amount,
