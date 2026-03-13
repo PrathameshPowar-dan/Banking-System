@@ -128,3 +128,77 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
         new ApiResponse(201, { transaction: transaction }, "Transaction completed successfully")
     )
 });
+
+// Create Initial Funds Transaction
+export const CreateIFT = asyncHandler(async (req: Request, res: Response) => {
+    const { toAccount, amount, idempotencyKey } = req.body;
+
+    if (!req.user) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
+    if (!toAccount || !amount || !idempotencyKey) {
+        throw new ApiError(400, "toAccount, amount and idempotencyKey are required");
+    };
+
+    const toUserAccount = await Account.findOne({
+        _id: toAccount,
+    })
+
+    if (!toUserAccount) {
+        throw new ApiError(400, "Invalid toAccount");
+    }
+
+    const fromUserAccount = await Account.findOne({
+        user: req.user._id
+    })
+
+    if (!fromUserAccount) {
+        throw new ApiError(400, "System user account not found");
+    }
+
+    let transaction;
+    try {
+        const session = await mongoose.startSession()
+        session.startTransaction()
+
+        const transaction = new Transaction({
+            fromAccount: fromUserAccount._id,
+            toAccount,
+            amount,
+            idempotencyKey,
+            status: "PENDING"
+        })
+
+        const debitLedgerEntry = await Ledger.create([{
+            account: fromUserAccount._id,
+            amount: amount,
+            transaction: transaction._id,
+            type: "DEBIT"
+        }], { session })
+
+        const creditLedgerEntry = await Ledger.create([{
+            account: toAccount,
+            amount: amount,
+            transaction: transaction._id,
+            type: "CREDIT"
+        }], { session })
+
+        transaction.status = "COMPLETED"
+        await transaction.save({ session })
+
+        await session.commitTransaction()
+        session.endSession();
+
+    } catch (err) {
+        console.error("IFT Error:", err);
+        throw new ApiError(400, "Initial Funds Transaction Error, please retry after sometime")
+    }
+
+    // Send Email
+    await sendTransactionEmail({ userEmail: req.user.email, name: req.user.name, amount, toAccount })
+
+    return res.status(201).json(
+        new ApiResponse(201, { transaction: transaction }, "Initial funds transaction completed successfully")
+    );
+});
