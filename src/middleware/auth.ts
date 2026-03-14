@@ -22,7 +22,7 @@ const AuthToken = asyncHandler(async (req: Request, _, next: NextFunction) => {
             throw new ApiError(401, "UNAUTHORIZED ACCESS");
         }
 
-        const isBlacklisted = await TokenBlacklist.findOne({ Token })
+        const isBlacklisted = await TokenBlacklist.findOne({ token: Token })
 
         if (isBlacklisted) {
             throw new ApiError(401, "Unauthorized access, token is invalid")
