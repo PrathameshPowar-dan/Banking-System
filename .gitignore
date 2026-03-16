@@ -26,3 +26,12 @@ Thumbs.db
 .env.test.local
 .env.production.local
 .env.local
+
+# Docker
+node_modules
+dist
+.env
+npm-debug.log
+Dockerfile
+.dockerignore
+.git
