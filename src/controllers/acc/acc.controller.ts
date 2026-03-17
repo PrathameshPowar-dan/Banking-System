@@ -52,7 +52,7 @@ export const getAccountBalance = asyncHandler(async (req: Request, res: Response
     });
 
     if (!account) {
-        throw new ApiError(404, "Account not found or unauthorized access");
+        throw new ApiError(404, "Account not found");
     }
 
     const balance = await (account as unknown as AccountType).GetBalance();
