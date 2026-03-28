@@ -100,6 +100,7 @@ YourFavBank
 <p>Hello <b>${name}</b>,</p>
 <p>Your transaction of <b>$${amount}</b> to account <b>${toAccount}</b> was successful.</p>
 <p>YourFavBank</p>
+<p>${Date.now()}</p>
 `;
 
     await sendEmail(userEmail, subject, text, html);

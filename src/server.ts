@@ -9,6 +9,7 @@ dotenv.config();
 
 const app = express();
 
+// JSON FOrmat and Cookie Parser
 app.use(express.json());
 app.use(cookieParser());
 
@@ -16,6 +17,7 @@ app.get("/", (req, res) => {
     res.send("Hello, World!");
 });
 
+// All in one Routes
 app.use("/api", AllRoutes);
 
 // Check up Error
