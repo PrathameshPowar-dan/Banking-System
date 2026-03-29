@@ -116,7 +116,7 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     if (Token) {
         // 2. Check if the token is already blacklisted to prevent duplicate key errors
         const isAlreadyBlacklisted = await TokenBlacklist.findOne({ token: Token });
-        
+
         // 3. If not blacklisted, add it
         if (!isAlreadyBlacklisted) {
             await TokenBlacklist.create({ token: Token });
@@ -128,5 +128,17 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 
     return res.status(200).json(
         new ApiResponse(200, null, "User Logged Out Successfully")
+    );
+});
+
+export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+        throw new ApiError(404, "User Not Found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, user, "User Profile Retrieved Successfully")
     );
 });
