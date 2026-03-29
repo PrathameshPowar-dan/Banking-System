@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import AllRoutes from "./routes/routes";
 import { ApiError } from "./utils/ApiError";
 
+// Env Config
 dotenv.config();
 
 const app = express();
